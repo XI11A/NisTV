@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="indigoLeft" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4B3FB5"/>
+      <stop offset="100%" stop-color="#3A2FA0"/>
+    </linearGradient>
+    <linearGradient id="indigoRight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4B3FB5"/>
+      <stop offset="100%" stop-color="#30268C"/>
+    </linearGradient>
+    <linearGradient id="ribbonGrad" x1="156" y1="136" x2="356" y2="376" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="50%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#3B6FD8"/>
+    </linearGradient>
+    <linearGradient id="playGrad" x1="208" y1="206" x2="302" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.75"/>
+    </linearGradient>
+    <linearGradient id="shadowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.0"/>
+    </linearGradient>
+    <linearGradient id="bottomShadow" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.40"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.0"/>
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#06B6D4" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <!-- Background Canvas -->
+  <rect width="512" height="512" rx="112" fill="#0B0D12"/>
+  <circle cx="256" cy="256" r="200" fill="#141824" opacity="0.4"/>
+  <g id="nis-logo-mark">
+    <!-- Left Vertical Stem -->
+    <path d="M156,136 L208,136 L208,376 L156,376 Z" fill="url(#indigoLeft)"/>
+    <!-- Right Vertical Stem -->
+    <path d="M304,136 L356,136 L356,376 L304,376 Z" fill="url(#indigoRight)"/>
+    <!-- Left Stem Ambient Shadow -->
+    <path d="M156,136 L208,136 L208,240 L156,176 Z" fill="url(#shadowGrad)"/>
+    <!-- Right Stem Ambient Shadow -->
+    <path d="M304,300 L356,336 L356,376 L304,376 Z" fill="url(#bottomShadow)"/>
+    <!-- Diagonal Ribbon (Cyan to Blue) -->
+    <path d="M156,136 L208,136 L356,376 L304,376 Z" fill="url(#ribbonGrad)" filter="url(#softGlow)"/>
+    <!-- Integrated Play-Arrow Facet -->
+    <path d="M208,206 L302,256 L208,306 Z" fill="url(#playGrad)"/>
+    <!-- Top Clean Light Refraction Edge -->
+    <path d="M156,136 L208,136 L208,140 L156,140 Z" fill="#FFFFFF" opacity="0.4"/>
+  </g>
+</svg>

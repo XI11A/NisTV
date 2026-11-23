@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">NisTV</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_live">Live TV</string>
+    <string name="tab_search">Search</string>
+    <string name="tab_favorites">My List</string>
+    <string name="tab_profile">Profile</string>
+    <string name="shortcut_livetv_short">Live TV</string>
+    <string name="shortcut_search_short">Search</string>
+    <string name="shortcut_downloads_short">Downloads</string>
+</resources>

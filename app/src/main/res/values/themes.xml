@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.NisTV" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/nistv_background</item>
+        <item name="android:navigationBarColor">@color/nistv_background</item>
+        <item name="android:windowBackground">@color/nistv_background</item>
+    </style>
+
+    <style name="Theme.NisTV.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/nistv_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.NisTV</item>
+    </style>
+</resources>

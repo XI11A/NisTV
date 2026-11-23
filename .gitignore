@@ -1,0 +1,65 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Java and Kotlin class files
+*.class
+
+# Log files
+*.log
+
+# Android Studio, IntelliJ, VS Code & OS files
+.idea/
+.gradle/
+.kotlin/
+.agent/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+*.bak
+
+# Gradle build directories
+build/
+**/build/
+app/build/
+kotlinToolingMetadata/
+
+# Android signing keys & sensitive credentials
+*.jks
+*.keystore
+*.key
+*.pem
+*.p12
+google-services.json
+
+# Local configurations and environment variables
+local.properties
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Node / Web dependencies & build outputs
+website/node_modules/
+website/dist/
+website/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Website APK downloads (folder structure kept via .gitkeep)
+website/public/downloads/*.apk
+website/dist/downloads/
+!website/public/downloads/.gitkeep
+
+# Diagnostics & Profiler
+*.hprof
+captures/

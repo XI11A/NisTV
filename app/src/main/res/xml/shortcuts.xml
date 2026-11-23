@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="shortcut_livetv"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_livetv"
+        android:shortcutShortLabel="@string/shortcut_livetv_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.nis.nistv"
+            android:targetClass="com.nis.nistv.MainActivity">
+            <extra android:name="shortcut_destination" android:value="livetv" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="shortcut_search"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_search"
+        android:shortcutShortLabel="@string/shortcut_search_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.nis.nistv"
+            android:targetClass="com.nis.nistv.MainActivity">
+            <extra android:name="shortcut_destination" android:value="search" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="shortcut_downloads"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_downloads"
+        android:shortcutShortLabel="@string/shortcut_downloads_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.nis.nistv"
+            android:targetClass="com.nis.nistv.MainActivity">
+            <extra android:name="shortcut_destination" android:value="downloads" />
+        </intent>
+    </shortcut>
+</shortcuts>
