@@ -9,6 +9,7 @@ activityCompose = "1.9.3"
 composeBom = "2024.12.01"
 navigationCompose = "2.8.5"
 media3 = "1.5.1"
+jellyfinMedia3Ffmpeg = "1.5.0+1"
 coil = "3.0.4"
 room = "2.6.1"
 datastore = "1.1.1"
@@ -45,6 +46,7 @@ androidx-media3-exoplayer-smoothstreaming = { group = "androidx.media3", name = 
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
 androidx-media3-datasource-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "media3" }
+jellyfin-media3-ffmpeg = { group = "org.jellyfin.media3", name = "media3-ffmpeg-decoder", version.ref = "jellyfinMedia3Ffmpeg" }
 
 # Coil 3
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }

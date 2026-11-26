@@ -2,7 +2,7 @@
 
 > **Generated Specification**  
 > **Repository Root:** `/data/data/com.termux/files/home/NisTV-Revamped`  
-> **Current App Version:** `2.0.1` (VersionCode: `20001`)  
+> **Current App Version:** `2.0.3` (VersionCode: `20003`)  
 > **Status:** Verified from source code, unit test execution, and release assembly.  
 > **Last Updated:** November 26, 2026  
 > **Notice:** All facts, paths, schema definitions, and versions herein reflect the exact state of the codebase as of November 2026.

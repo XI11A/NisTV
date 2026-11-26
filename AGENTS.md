@@ -64,3 +64,19 @@ These rules govern all AI coding agents working within the NisTV Revamped codeba
 
 10. **Immutable App Identity**:
     Never change the `applicationId`, signing config, or package name as part of a version bump.
+
+## Release & Distribution Workflow (Mandatory on Every Change)
+
+Whenever a task modifies the app or project (excluding docs/test-only tasks that skip a version bump):
+
+1. **In-App Changelog**:
+   Update `APP_CHANGELOG` in `app/src/main/java/com/nis/nistv/core/designsystem/component/ChangelogDialog.kt` with the new version entry (marked `tag = "Latest"`, and demote the previous `"Latest"` entry to `"Patch"` / `"Minor"` / `"Major"`).
+2. **Release APK Build**:
+   Run `./gradlew assembleRelease` to build the signed release APK (`app/build/outputs/apk/release/app-release.apk`).
+3. **Website APK & Metadata Update**:
+   - Copy the built release APK to `website/public/downloads/nistv-v<versionName>.apk` and `website/public/downloads/nistv-latest.apk`.
+   - Compute exact `fileSizeBytes`, `apkSize` (e.g. `"15.2 MB"`), `sha256`, and `md5` from the built APK.
+   - Update `website/public/version.json`, `website/public/api/version.json`, and `website/src/data/appData.ts` (`CURRENT_RELEASE` and `CHANGELOG_DATA`).
+   - Run `cd website && npm run build` to verify the website TypeScript and Vite production build passes.
+4. **Git Commit & Push**:
+   Stage all changes (`git add -A`), commit with a clear message referencing the new version, and push to `origin main` (`git push origin main`).

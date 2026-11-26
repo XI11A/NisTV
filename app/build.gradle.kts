@@ -116,6 +116,7 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.datasource.okhttp)
+    implementation(libs.jellyfin.media3.ffmpeg)
 
     // Coil 3
     implementation(libs.coil.compose)

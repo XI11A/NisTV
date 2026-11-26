@@ -197,7 +197,7 @@ class UserPreferences(
     }
 
     val dailyDownloadLimitGb: Flow<Int> = dataStore.data.map { prefs ->
-        prefs[KEY_DAILY_DOWNLOAD_LIMIT_GB] ?: 10 // Default 10 GB limit
+        prefs[KEY_DAILY_DOWNLOAD_LIMIT_GB] ?: 0 // 0 = Unlimited
     }
 
     suspend fun setDailyDownloadLimitGb(limitGb: Int) {
@@ -241,7 +241,7 @@ class UserPreferences(
     }
 
     suspend fun checkDailyLimitExceeded(additionalBytes: Long = 0L): DailyLimitCheck {
-        val limitGb = dailyDownloadLimitGb.firstOrNull() ?: 10
+        val limitGb = dailyDownloadLimitGb.firstOrNull() ?: 0
         if (limitGb <= 0) {
             return DailyLimitCheck(
                 isExceeded = false,

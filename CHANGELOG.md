@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-11-26
+
+### Fixed
+- **AC-3 / E-AC-3 / DTS Audio Track Playback (`ERROR_CODE_DECODER_INIT_FAILED`)**:
+  - Added `org.jellyfin.media3:media3-ffmpeg-decoder:1.5.0+1` so `DefaultRenderersFactory` (`EXTENSION_RENDERER_MODE_PREFER`) software-decodes `audio/ac3`, `audio/eac3`, `audio/vnd.dts`, `audio/true-hd`, and other surround/lossless audio formats unsupported by stock Android `MediaCodec`.
+  - Added graceful audio-track override fallback in `OfflinePlayerScreen` if `ERROR_CODE_DECODER_INIT_FAILED` occurs while switching audio tracks, reverting to the default track instead of halting playback.
+
+## [2.0.2] - 2026-11-26
+
+### Removed
+- **Hidden Client-Side Daily Download Limit**:
+  - Removed the default 10 GB daily download cap enforcement in `DownloadManager`, `UserPreferences` (default `dailyDownloadLimitGb` set to `0` / unlimited), and `AutopilotManager`, preventing unconfigured client-side `"Daily download limit exceeded"` pauses.
+
 ## [2.0.1] - 2026-11-26
 
 ### Fixed

@@ -1,15 +1,15 @@
 import { ReleaseInfo, FeatureItem, FaqItem, ChangelogItem, SpecRequirement } from '../types';
 
 export const CURRENT_RELEASE: ReleaseInfo = {
-  version: '2.0.1',
-  versionCode: 20001,
+  version: '2.0.3',
+  versionCode: 20003,
   releaseDate: 'November 2026',
-  fileSize: '15.2 MB',
-  fileSizeBytes: 15974042,
-  apkFileName: 'nistv-v2.0.1.apk',
-  downloadUrl: './downloads/nistv-v2.0.1.apk',
-  sha256: 'a300ac4c0b4443df7aa48dadb3006bce9e2567b5769207a8c802bbb5742acd89',
-  md5: '5b110093eb25aa7fcecb4571c38ed083',
+  fileSize: '20.9 MB',
+  fileSizeBytes: 21906159,
+  apkFileName: 'nistv-v2.0.3.apk',
+  downloadUrl: './downloads/nistv-v2.0.3.apk',
+  sha256: '5269dd848d7013c1813136dfeaf81186093fe9e426d81bd539be7dab4d341649',
+  md5: '8f00539c18fca6066965213b1b2e0ae9',
   minAndroid: 'Android 7.0 (Nougat, API 24)',
   targetAndroid: 'Android 14.0 (API 34)',
   architectures: ['arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'],
@@ -186,9 +186,33 @@ export const SYSTEM_SPECS: SpecRequirement[] = [
 
 export const CHANGELOG_DATA: ChangelogItem[] = [
   {
-    version: 'v2.0.1',
+    version: 'v2.0.3',
     date: 'November 2026',
     tag: 'Latest',
+    added: [
+      'Media3 FFmpeg Audio Decoder (1.5.0+1): Software decoding for Dolby Digital AC-3, E-AC-3, DTS, and TrueHD audio tracks across downloaded and streamed media'
+    ],
+    improved: [
+      'Graceful Audio Fallback: Offline player automatically reverts to the default audio track if an unsupported track fails decoder initialization'
+    ],
+    fixed: [
+      'ERROR_CODE_DECODER_INIT_FAILED: Resolved MediaCodecAudioRenderer failure when selecting AC-3 / E-AC-3 audio tracks in downloaded videos'
+    ]
+  },
+  {
+    version: 'v2.0.2',
+    date: 'November 2026',
+    tag: 'Stable',
+    added: [],
+    improved: [],
+    fixed: [
+      'Unlimited Downloads: Removed hidden default 10 GB client-side daily download limit enforcement in DownloadManager, UserPreferences, and AutopilotManager'
+    ]
+  },
+  {
+    version: 'v2.0.1',
+    date: 'November 2026',
+    tag: 'Stable',
     added: [],
     improved: [
       'Paused Reason Visibility: Downloads screen now displays pause reason notices (daily limit or Wi-Fi wait) on paused items'

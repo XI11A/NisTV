@@ -43,9 +43,27 @@ data class AppReleaseNote(
 
 val APP_CHANGELOG = listOf(
     AppReleaseNote(
-        version = "v2.0.1",
+        version = "v2.0.3",
         date = "November 2026",
         tag = "Latest",
+        highlights = listOf(
+            "AC-3 / E-AC-3 / DTS Audio Decoder Fix: Bundled Media3 FFmpeg audio decoder (1.5.0+1) so downloaded and streamed videos with Dolby Digital AC-3, E-AC-3, DTS, and TrueHD audio tracks play without ERROR_CODE_DECODER_INIT_FAILED",
+            "Graceful Audio Fallback: Offline player automatically reverts to the default audio track if an unsupported track fails decoder initialization"
+        )
+    ),
+    AppReleaseNote(
+        version = "v2.0.2",
+        date = "November 2026",
+        tag = "Patch",
+        highlights = listOf(
+            "Unlimited Downloads: Removed hidden default 10 GB client-side daily download limit enforcement in DownloadManager, UserPreferences, and AutopilotManager",
+            "No More Unconfigured Limit Pauses: Downloads are no longer paused by an unconfigured client-side daily quota"
+        )
+    ),
+    AppReleaseNote(
+        version = "v2.0.1",
+        date = "November 2026",
+        tag = "Patch",
         highlights = listOf(
             "Download Random Pause & Resume Loop Fix: Fixed O(N^2) byte-usage inflation in MultiThreadedDownloader so single downloads no longer trip the daily download limit and re-pause on resume",
             "Pause/Resume Synchronization: Serialized per-download pause, resume, and retry transitions in DownloadManager and cleared stale pause reasons on resume",

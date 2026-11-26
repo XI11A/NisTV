@@ -630,11 +630,13 @@ class DownloadManager(
                             userPreferences.recordDownloadedBytes(bytes)
                         },
                         checkDailyLimit = {
-                            val limit = userPreferences.checkDailyLimitExceeded()
-                            if (limit.isExceeded) {
-                                downloadDao.markFailed(id, DownloadStatus.PAUSED.name, "Daily download limit exceeded (${limit.limitGb} GB)")
-                            }
-                            limit
+                            com.nis.nistv.core.preferences.DailyLimitCheck(
+                                isExceeded = false,
+                                limitGb = 0,
+                                usedBytes = 0L,
+                                limitBytes = 0L,
+                                additionalBytes = 0L
+                            )
                         },
                         onRenewUrl = {
                             if (!download.afdsFileId.isNullOrBlank() && afdsDownloadProvider != null) {

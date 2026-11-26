@@ -668,6 +668,22 @@ fun OfflinePlayerScreen(
 
             override fun onPlayerError(error: PlaybackException) {
                 Log.e("OfflinePlayer", "Playback error [${error.errorCodeName}]: ${error.message}", error)
+                // If decoder init failed while an explicit audio override was active, fall back to default audio track
+                if (error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED &&
+                    exoPlayer.trackSelectionParameters.overrides.values.any { it.type == C.TRACK_TYPE_AUDIO }
+                ) {
+                    Log.w("OfflinePlayer", "Audio decoder init failed for selected track; reverting audio track override")
+                    val pos = exoPlayer.currentPosition.coerceAtLeast(0L)
+                    exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                        .buildUpon()
+                        .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
+                        .build()
+                    exoPlayer.seekTo(pos)
+                    exoPlayer.prepare()
+                    exoPlayer.play()
+                    Toast.makeText(context, "Selected audio format unsupported; reverted to default track", Toast.LENGTH_SHORT).show()
+                    return
+                }
                 // If direct file:// failed, retry with FileProvider content:// URI fallback
                 val currentUri = exoPlayer.currentMediaItem?.localConfiguration?.uri
                 val currentFile = file

@@ -74,8 +74,12 @@ class AutopilotManager(
         val availableBytes = stat.availableBlocksLong * stat.blockSizeLong
 
         val todayBytes = userPreferences.todayDownloadedBytes.firstOrNull() ?: 0L
-        val limitGb = userPreferences.dailyDownloadLimitGb.firstOrNull() ?: 10
-        val remainingQuotaBytes = (limitGb.toLong() * 1024L * 1024L * 1024L) - todayBytes
+        val limitGb = userPreferences.dailyDownloadLimitGb.firstOrNull() ?: 0
+        val remainingQuotaBytes = if (limitGb > 0) {
+            (limitGb.toLong() * 1024L * 1024L * 1024L) - todayBytes
+        } else {
+            Long.MAX_VALUE
+        }
 
         // Assemble library items for this series
         val seriesDownloads = downloadDao.getAllDownloadsSync().filter {
