@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-11-26
+
+### Fixed
+- **Download Random Pause & Resume Loop**:
+  - Fixed O(N^2) byte-usage inflation in `MultiThreadedDownloader` (`DownloadByteBatcher`) where DataStore flush deltas were not advancing the flushed baseline, causing single downloads to prematurely trip the 10 GB daily download limit, pause mid-download, and immediately re-pause on resume.
+  - Serialized per-download pause/resume/retry operations in `DownloadManager` with per-ID mutexes and monotonic operation sequences so async `pauseDownload` updates cannot overwrite subsequent `resumeDownload` transitions, and cleared stale pause/error messages when starting or resuming.
+  - Updated `DownloadsScreen` to display `errorMessage` on `PAUSED` downloads (e.g., Wi-Fi-only wait or daily limit reached) in addition to `FAILED` downloads.
+
 ## [2.0.0] - 2026-11-22
 
 ### Added

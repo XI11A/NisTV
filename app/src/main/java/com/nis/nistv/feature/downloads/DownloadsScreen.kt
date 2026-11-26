@@ -1041,10 +1041,12 @@ fun ActiveDownloadCard(
             }
 
             // Status message
-            if (download.status == DownloadStatus.FAILED.name && !download.errorMessage.isNullOrBlank()) {
+            if ((download.status == DownloadStatus.FAILED.name || download.status == DownloadStatus.PAUSED.name) &&
+                !download.errorMessage.isNullOrBlank()
+            ) {
                 Text(
                     text = download.errorMessage,
-                    color = NisTheme.colors.error,
+                    color = if (download.status == DownloadStatus.FAILED.name) NisTheme.colors.error else NisTheme.colors.warning,
                     style = MaterialTheme.typography.labelSmall
                 )
             }

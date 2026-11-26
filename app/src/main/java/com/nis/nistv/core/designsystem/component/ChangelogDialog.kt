@@ -43,9 +43,19 @@ data class AppReleaseNote(
 
 val APP_CHANGELOG = listOf(
     AppReleaseNote(
-        version = "v2.0.0",
+        version = "v2.0.1",
         date = "November 2026",
         tag = "Latest",
+        highlights = listOf(
+            "Download Random Pause & Resume Loop Fix: Fixed O(N^2) byte-usage inflation in MultiThreadedDownloader so single downloads no longer trip the daily download limit and re-pause on resume",
+            "Pause/Resume Synchronization: Serialized per-download pause, resume, and retry transitions in DownloadManager and cleared stale pause reasons on resume",
+            "Paused Reason Visibility: Downloads screen now displays pause reason notices (such as daily limit or Wi-Fi wait) on paused items"
+        )
+    ),
+    AppReleaseNote(
+        version = "v2.0.0",
+        date = "November 2026",
+        tag = "Major",
         highlights = listOf(
             "Next-Gen Modern UI Overhaul: Floating glass island navigation dock with dynamic scroll-hiding, ambient lighting hero carousels, and segmented story progress indicators",
             "Modern Segmented Download Engine: Built on pure Kotlin Coroutines, OkHttp, and Java NIO FileChannel positional writes (pwrite), eliminating FUSE filesystem locks and 99% hangs",

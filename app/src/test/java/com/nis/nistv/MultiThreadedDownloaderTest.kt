@@ -2,6 +2,7 @@ package com.nis.nistv
 
 import com.nis.nistv.core.database.entity.DownloadEntity
 import com.nis.nistv.core.database.entity.DownloadStatus
+import com.nis.nistv.data.download.engine.DownloadByteBatcher
 import com.nis.nistv.data.download.engine.MultiThreadedDownloader
 import org.junit.Assert.*
 import org.junit.Test
@@ -169,5 +170,49 @@ class MultiThreadedDownloaderTest {
             status = DownloadStatus.DOWNLOADING.name
         )
         assertEquals(99, download.progressPercent)
+    }
+
+    @Test
+    fun downloadByteBatcher_recordsEachByteOnceAcrossMultipleFlushes() {
+        val batcher = DownloadByteBatcher(initialBytes = 0L)
+        var totalRecorded = 0L
+
+        // Simulate 500 MB download in 5 MB increments (100 ticks)
+        val mb = 1024L * 1024L
+        for (i in 1..100) {
+            val current = i * 5L * mb
+            val flushed = batcher.takePendingIfReady(
+                currentBytes = current,
+                elapsedSinceLastFlushMs = 500L
+            )
+            totalRecorded += flushed
+        }
+        totalRecorded += batcher.takeRemaining(500L * mb)
+
+        // Must equal exact 500 MB, never inflated O(N^2)
+        assertEquals(500L * mb, totalRecorded)
+    }
+
+    @Test
+    fun downloadByteBatcher_onResume_recordsOnlyNewBytes() {
+        val mb = 1024L * 1024L
+        // Resuming a download that already has 300 MB on disk
+        val batcher = DownloadByteBatcher(initialBytes = 300L * mb)
+        var totalRecorded = 0L
+
+        // Below 5 MB threshold and below 10s interval -> nothing flushed yet
+        assertEquals(0L, batcher.takePendingIfReady(302L * mb, elapsedSinceLastFlushMs = 1_000L))
+
+        // Time threshold (10s) triggers flush of only the 2 MB delta
+        totalRecorded += batcher.takePendingIfReady(302L * mb, elapsedSinceLastFlushMs = 10_000L)
+        assertEquals(2L * mb, totalRecorded)
+
+        // Next 5 MB delta (302 MB -> 307 MB)
+        totalRecorded += batcher.takePendingIfReady(307L * mb, elapsedSinceLastFlushMs = 500L)
+        assertEquals(7L * mb, totalRecorded)
+
+        // Final remaining 3 MB (307 MB -> 310 MB)
+        totalRecorded += batcher.takeRemaining(310L * mb)
+        assertEquals(10L * mb, totalRecorded)
     }
 }

@@ -23,6 +23,8 @@ import com.nis.nistv.data.download.provider.AfdsDownloadProvider
 import com.nis.nistv.data.download.offline.OfflineMediaRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import okhttp3.ConnectionPool
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
@@ -33,6 +35,7 @@ import java.io.InputStream
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 
 data class ActiveDownloadProgress(
     val downloadedBytes: Long,
@@ -74,7 +77,13 @@ class DownloadManager(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val activeJobs = ConcurrentHashMap<String, Job>()
+    private val jobMutexes = ConcurrentHashMap<String, Mutex>()
+    private val opSequence = ConcurrentHashMap<String, AtomicLong>()
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    private fun mutexFor(id: String): Mutex = jobMutexes.computeIfAbsent(id) { Mutex() }
+    private fun nextOpSeq(id: String): Long = opSequence.computeIfAbsent(id) { AtomicLong(0L) }.incrementAndGet()
+    private fun isLatestOp(id: String, seq: Long): Boolean = opSequence[id]?.get() == seq
 
     private val downloadOkHttpClient: OkHttpClient = okHttpClient.newBuilder()
         .dispatcher(Dispatcher().apply {
@@ -306,66 +315,78 @@ class DownloadManager(
     }
 
     fun startDownload(id: String) {
+        val seq = nextOpSeq(id)
         scope.launch {
-            startDownloadJob(id)
+            mutexFor(id).withLock {
+                if (!isLatestOp(id, seq)) return@withLock
+                startDownloadJobLocked(id)
+            }
         }
     }
 
     fun pauseDownload(id: String) {
+        val seq = nextOpSeq(id)
         val inMemoryProgress = _activeProgressMap.value[id]
-        activeJobs[id]?.cancel()
-        activeJobs.remove(id)
+        val jobToCancel = activeJobs[id]
+        jobToCancel?.cancel()
         _activeProgressMap.update { map -> map.filterKeys { it != id } }
         scope.launch {
-            val dl = downloadDao.getDownloadById(id)
-            if (dl != null) {
-                val partsBytes = try {
-                    val stateFile = File("${dl.filePath}.parts.json")
-                    if (stateFile.exists()) {
-                        MultiThreadedDownloader.restoreChunksFromStateFile(stateFile, dl.id, dl.fileSizeBytes)
-                            ?.sumOf { it.downloadedBytes } ?: 0L
-                    } else 0L
-                } catch (_: Exception) {
-                    0L
-                }
-                val fileBytes = try {
-                    val file = File(dl.filePath)
-                    if (file.exists()) file.length() else 0L
-                } catch (_: Exception) {
-                    0L
-                }
+            mutexFor(id).withLock {
+                if (!isLatestOp(id, seq)) return@withLock
+                jobToCancel?.cancelAndJoin()
+                if (!isLatestOp(id, seq)) return@withLock
 
-                val currentBytes = when {
-                    (inMemoryProgress?.downloadedBytes ?: 0L) > 0L -> inMemoryProgress!!.downloadedBytes
-                    partsBytes > 0L -> partsBytes
-                    fileBytes > 0L -> fileBytes
-                    else -> dl.downloadedBytes
-                }
+                val dl = downloadDao.getDownloadById(id)
+                if (dl != null) {
+                    val partsBytes = try {
+                        val stateFile = File("${dl.filePath}.parts.json")
+                        if (stateFile.exists()) {
+                            MultiThreadedDownloader.restoreChunksFromStateFile(stateFile, dl.id, dl.fileSizeBytes)
+                                ?.sumOf { it.downloadedBytes } ?: 0L
+                        } else 0L
+                    } catch (_: Exception) {
+                        0L
+                    }
+                    val fileBytes = try {
+                        val file = File(dl.filePath)
+                        if (file.exists()) file.length() else 0L
+                    } catch (_: Exception) {
+                        0L
+                    }
 
-                if (currentBytes > 0L && currentBytes != dl.downloadedBytes) {
-                    downloadDao.updateProgress(id, currentBytes, 0L)
+                    val currentBytes = when {
+                        (inMemoryProgress?.downloadedBytes ?: 0L) > 0L -> inMemoryProgress!!.downloadedBytes
+                        partsBytes > 0L -> partsBytes
+                        fileBytes > 0L -> fileBytes
+                        else -> dl.downloadedBytes
+                    }
+
+                    if (currentBytes > 0L && currentBytes != dl.downloadedBytes) {
+                        downloadDao.updateProgress(id, currentBytes, 0L)
+                    }
                 }
-            }
-            downloadDao.updateStatus(id, DownloadStatus.PAUSED.name)
-            downloadDao.getDownloadById(id)?.let { updatedDl ->
-                getThreadProgressFor(updatedDl)?.let { tp ->
-                    _activeThreadProgress.update { map -> map + (id to tp) }
+                downloadDao.updateStatus(id, DownloadStatus.PAUSED.name)
+                downloadDao.getDownloadById(id)?.let { updatedDl ->
+                    getThreadProgressFor(updatedDl)?.let { tp ->
+                        _activeThreadProgress.update { map -> map + (id to tp) }
+                    }
                 }
+                checkStopForegroundService()
             }
-            checkStopForegroundService()
         }
     }
 
     fun resumeDownload(id: String) {
+        val seq = nextOpSeq(id)
         scope.launch {
-            val download = downloadDao.getDownloadById(id) ?: return@launch
-            // Note: We deliberately do NOT proactively refresh the download URL on resume.
-            // OkDownload stores chunk breakpoints by (URL + directory + filename). Eagerly refreshing
-            // the signed AFDS link produces a different URL, altering OkDownload's task ID, wiping
-            // the stored breakpoint, and forcing the file to restart from 0 bytes.
-            // If the existing URL is expired, MultiThreadedDownloader's retry loop will invoke
-            // onRenewUrl to renew the link and migrate the breakpoint info seamlessly.
-            startDownloadJob(id)
+            mutexFor(id).withLock {
+                if (!isLatestOp(id, seq)) return@withLock
+                downloadDao.getDownloadById(id) ?: return@withLock
+                // Note: We deliberately do NOT proactively refresh the download URL on resume.
+                // MultiThreadedDownloader's retry loop will invoke onRenewUrl if the signed link
+                // has expired, preserving existing .parts.json chunk breakpoints seamlessly.
+                startDownloadJobLocked(id)
+            }
         }
     }
 
@@ -447,27 +468,31 @@ class DownloadManager(
     }
 
     fun retryDownload(id: String) {
+        val seq = nextOpSeq(id)
         scope.launch {
-            val download = downloadDao.getDownloadById(id) ?: return@launch
-            // Refresh AFDS link if download originated from AFDS archive
-            if (!download.afdsFileId.isNullOrBlank() && afdsDownloadProvider != null) {
-                try {
-                    val refreshRes = afdsDownloadProvider.regenerateDownloadUrl(
-                        fileId = download.afdsFileId,
-                        sourceTable = download.afdsSourceTable ?: "files"
-                    )
-                    refreshRes.getOrNull()?.let { freshUrl ->
-                        if (freshUrl.isNotBlank() && freshUrl != download.downloadUrl) {
-                            Log.i(TAG, "Refreshed AFDS link on retry for '${download.title}'")
-                            downloadDao.updateDownload(download.copy(downloadUrl = freshUrl))
+            mutexFor(id).withLock {
+                if (!isLatestOp(id, seq)) return@withLock
+                val download = downloadDao.getDownloadById(id) ?: return@withLock
+                // Refresh AFDS link if download originated from AFDS archive
+                if (!download.afdsFileId.isNullOrBlank() && afdsDownloadProvider != null) {
+                    try {
+                        val refreshRes = afdsDownloadProvider.regenerateDownloadUrl(
+                            fileId = download.afdsFileId,
+                            sourceTable = download.afdsSourceTable ?: "files"
+                        )
+                        refreshRes.getOrNull()?.let { freshUrl ->
+                            if (freshUrl.isNotBlank() && freshUrl != download.downloadUrl) {
+                                Log.i(TAG, "Refreshed AFDS link on retry for '${download.title}'")
+                                downloadDao.updateDownload(download.copy(downloadUrl = freshUrl))
+                            }
                         }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed AFDS link renewal on retry: ${e.message}")
                     }
-                } catch (e: Exception) {
-                    Log.w(TAG, "Failed AFDS link renewal on retry: ${e.message}")
                 }
+                downloadDao.markFailed(id, DownloadStatus.QUEUED.name, null)
+                startDownloadJobLocked(id)
             }
-            downloadDao.markFailed(id, DownloadStatus.QUEUED.name, null)
-            startDownloadJob(id)
         }
     }
 
@@ -511,33 +536,40 @@ class DownloadManager(
     }
 
     private suspend fun startDownloadJob(id: String) {
-        activeJobs[id]?.cancel()
+        mutexFor(id).withLock {
+            startDownloadJobLocked(id)
+        }
+    }
+
+    private suspend fun startDownloadJobLocked(id: String) {
+        activeJobs[id]?.cancelAndJoin()
 
         val job = scope.launch {
-            val initialDownload = downloadDao.getDownloadById(id) ?: return@launch
-            val isWifiOnly = userPreferences.isWifiOnlyDownloads.firstOrNull() ?: false
+            try {
+                val initialDownload = downloadDao.getDownloadById(id) ?: return@launch
+                val isWifiOnly = userPreferences.isWifiOnlyDownloads.firstOrNull() ?: false
 
-            getThreadProgressFor(initialDownload)?.let { tp ->
-                _activeThreadProgress.update { map -> map + (id to tp) }
-            }
-
-            if (initialDownload.downloadedBytes > 0L) {
-                _activeProgressMap.update { map ->
-                    map + (id to ActiveDownloadProgress(
-                        downloadedBytes = initialDownload.downloadedBytes,
-                        totalBytes = initialDownload.fileSizeBytes,
-                        speedBytesPerSec = 0L
-                    ))
+                getThreadProgressFor(initialDownload)?.let { tp ->
+                    _activeThreadProgress.update { map -> map + (id to tp) }
                 }
-            }
 
-            if (isWifiOnly && !isWifiConnected()) {
-                downloadDao.markFailed(id, DownloadStatus.PAUSED.name, "Waiting for Wi-Fi connection")
-                checkStopForegroundService()
-                return@launch
-            }
+                if (initialDownload.downloadedBytes > 0L) {
+                    _activeProgressMap.update { map ->
+                        map + (id to ActiveDownloadProgress(
+                            downloadedBytes = initialDownload.downloadedBytes,
+                            totalBytes = initialDownload.fileSizeBytes,
+                            speedBytesPerSec = 0L
+                        ))
+                    }
+                }
 
-            downloadDao.updateStatus(id, DownloadStatus.DOWNLOADING.name)
+                if (isWifiOnly && !isWifiConnected()) {
+                    downloadDao.markFailed(id, DownloadStatus.PAUSED.name, "Waiting for Wi-Fi connection")
+                    return@launch
+                }
+
+                // Clear any previous pause/error reason when actively starting/resuming
+                downloadDao.markFailed(id, DownloadStatus.DOWNLOADING.name, null)
             val threadCount = userPreferences.downloadThreads.firstOrNull() ?: 4
 
             var retryCount = 0
@@ -702,8 +734,13 @@ class DownloadManager(
                 }
             }
 
-            activeJobs.remove(id)
-            checkStopForegroundService()
+            } finally {
+                val currentJob = coroutineContext[Job]
+                if (currentJob != null) {
+                    activeJobs.remove(id, currentJob)
+                }
+                checkStopForegroundService()
+            }
         }
 
         activeJobs[id] = job

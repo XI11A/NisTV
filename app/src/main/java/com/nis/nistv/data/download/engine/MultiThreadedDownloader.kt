@@ -323,7 +323,7 @@ class MultiThreadedDownloader(
         var currentSpeed = 0L
 
         // DataStore batching tracking
-        var accumulatedBytesSinceFlush = 0L
+        val byteBatcher = DownloadByteBatcher(initialDownloaded)
         var lastDataStoreFlushTime = SystemClock.elapsedRealtime()
         var lastLimitCheckTime = 0L
         var lastStateFileSaveTime = SystemClock.elapsedRealtime()
@@ -361,13 +361,11 @@ class MultiThreadedDownloader(
                 }
 
                 // Batch DataStore disk writes (flush every 10s or when 5MB accumulated)
-                val diffBytes = curDownloaded - (initialDownloaded + accumulatedBytesSinceFlush)
-                if (diffBytes > 0) {
-                    accumulatedBytesSinceFlush += diffBytes
-                }
-                if (accumulatedBytesSinceFlush >= 5 * 1024 * 1024L || (accumulatedBytesSinceFlush > 0 && now - lastDataStoreFlushTime >= 10_000L)) {
-                    val toFlush = accumulatedBytesSinceFlush
-                    accumulatedBytesSinceFlush = 0L
+                val toFlush = byteBatcher.takePendingIfReady(
+                    currentBytes = curDownloaded,
+                    elapsedSinceLastFlushMs = now - lastDataStoreFlushTime
+                )
+                if (toFlush > 0L) {
                     lastDataStoreFlushTime = now
                     flushAccumulatedDataStore(toFlush)
                 }
@@ -553,9 +551,9 @@ class MultiThreadedDownloader(
             }
 
             // Flush remaining DataStore bytes
-            if (accumulatedBytesSinceFlush > 0L) {
-                flushAccumulatedDataStore(accumulatedBytesSinceFlush)
-                accumulatedBytesSinceFlush = 0L
+            val remainingBytes = byteBatcher.takeRemaining(totalDownloadedAtomic.get())
+            if (remainingBytes > 0L) {
+                flushAccumulatedDataStore(remainingBytes)
             }
 
         } finally {
@@ -569,5 +567,37 @@ class MultiThreadedDownloader(
         }
 
         downloadSuccess
+    }
+}
+
+/**
+ * Tracks DataStore byte-usage deltas so each downloaded byte is recorded at most once
+ * across periodic flushes and final completion.
+ */
+internal class DownloadByteBatcher(initialBytes: Long) {
+    private var lastFlushedBytes: Long = initialBytes
+
+    @Synchronized
+    fun takePendingIfReady(
+        currentBytes: Long,
+        elapsedSinceLastFlushMs: Long,
+        minBatchBytes: Long = 5 * 1024 * 1024L,
+        maxBatchIntervalMs: Long = 10_000L
+    ): Long {
+        val pending = currentBytes - lastFlushedBytes
+        if (pending <= 0L) return 0L
+        if (pending >= minBatchBytes || elapsedSinceLastFlushMs >= maxBatchIntervalMs) {
+            lastFlushedBytes = currentBytes
+            return pending
+        }
+        return 0L
+    }
+
+    @Synchronized
+    fun takeRemaining(currentBytes: Long): Long {
+        val remaining = currentBytes - lastFlushedBytes
+        if (remaining <= 0L) return 0L
+        lastFlushedBytes = currentBytes
+        return remaining
     }
 }

@@ -1,15 +1,15 @@
 import { ReleaseInfo, FeatureItem, FaqItem, ChangelogItem, SpecRequirement } from '../types';
 
 export const CURRENT_RELEASE: ReleaseInfo = {
-  version: '2.0.0',
-  versionCode: 20000,
+  version: '2.0.1',
+  versionCode: 20001,
   releaseDate: 'November 2026',
   fileSize: '15.2 MB',
-  fileSizeBytes: 15957658,
-  apkFileName: 'nistv-v2.0.0.apk',
-  downloadUrl: './downloads/nistv-v2.0.0.apk',
-  sha256: 'a5a7796b041c7b9b15d5ae636c45872878076d21ea5e5b120a889efb498d4ee2',
-  md5: '2420009de890462218eefd9742c30fe7',
+  fileSizeBytes: 15974042,
+  apkFileName: 'nistv-v2.0.1.apk',
+  downloadUrl: './downloads/nistv-v2.0.1.apk',
+  sha256: 'a300ac4c0b4443df7aa48dadb3006bce9e2567b5769207a8c802bbb5742acd89',
+  md5: '5b110093eb25aa7fcecb4571c38ed083',
   minAndroid: 'Android 7.0 (Nougat, API 24)',
   targetAndroid: 'Android 14.0 (API 34)',
   architectures: ['arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'],
@@ -186,9 +186,22 @@ export const SYSTEM_SPECS: SpecRequirement[] = [
 
 export const CHANGELOG_DATA: ChangelogItem[] = [
   {
-    version: 'v2.0.0',
+    version: 'v2.0.1',
     date: 'November 2026',
     tag: 'Latest',
+    added: [],
+    improved: [
+      'Paused Reason Visibility: Downloads screen now displays pause reason notices (daily limit or Wi-Fi wait) on paused items'
+    ],
+    fixed: [
+      'Download Random Pause & Resume Loop: Fixed O(N^2) byte-usage inflation in MultiThreadedDownloader so single downloads no longer trip the daily download limit and re-pause on resume',
+      'Pause/Resume Synchronization: Serialized per-download pause, resume, and retry transitions in DownloadManager and cleared stale pause reasons on resume'
+    ]
+  },
+  {
+    version: 'v2.0.0',
+    date: 'November 2026',
+    tag: 'Stable',
     added: [
       'Next-Gen Modern UI Overhaul: Floating glass island navigation dock with dynamic scroll-hiding, glowing periwinkle pill indicators, and ambient lighting hero carousel',
       'Modern Segmented Download Engine: Powered by Kotlin Coroutines, OkHttp, and Java NIO FileChannel positional writes (pwrite), eliminating FUSE seek locks and 99% completion hangs',
